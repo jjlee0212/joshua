@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>족보해커 - AI 실시간 출제 유형 분석 & 고효율 학습 엔진</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background-color: #0f172a;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 0.75rem;
+    }
+    nav button {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    nav button:hover, nav button.active {
+      color: #fff;
+      background-color: #1e293b;
+    }
+    main {
+      flex: 1;
+      max-width: 1050px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .page {
+      display: none;
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .page.active {
+      display: block;
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      color: #0f172a;
+    }
+    p.subtitle {
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #334155;
+    }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #0284c7;
+    }
+    .btn {
+      background-color: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background-color: #0369a1;
+    }
+    .btn-danger {
+      background-color: #ef4444;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    
+    /* Upload Box */
+    .file-upload-box {
+      border: 2px dashed #94a3b8;
+      padding: 1.5rem;
+      text-align: center;
+      border-radius: 8px;
+      background: #f8fafc;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .file-upload-box:hover {
+      border-color: #0284c7;
+      background: #f0f9ff;
+    }
+    .file-tag {
+      display: inline-block;
+      background: #e2e8f0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      margin-right: 0.25rem;
+    }
+
+    /* Memo List Card */
+    .memo-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .memo-card h4 {
+      color: #0284c7;
+      margin-bottom: 0.4rem;
+    }
+    .memo-card p {
+      color: #334155;
+      white-space: pre-line;
+      line-height: 1.5;
+    }
+
+    /* Analytics Dashboard & Pattern Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 1.25rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-card h3 {
+      font-size: 1.8rem;
+      color: #0284c7;
+      margin-top: 0.25rem;
+    }
+    .pattern-bar-container {
+      margin-top: 1rem;
+    }
+    .pattern-bar-item {
+      margin-bottom: 1rem;
+    }
+    .pattern-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .bar-bg {
+      background: #e2e8f0;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      background: #0284c7;
+      height: 100%;
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+
+    /* AI Report & Priority Box */
+    .priority-card {
+      background: #fff;
+      border-left: 6px solid #0284c7;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border-radius: 0 10px 10px 0;
+      border-top: 1px solid #f1f5f9;
+      border-right: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #fff;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .badge-high { background-color: #ef4444; }
+    .badge-mid { background-color: #f59e0b; }
+    .badge-low { background-color: #10b981; }
+
+    .ai-strategy-box {
+      background-color: #f0f9ff;
+      border: 1px dashed #0284c7;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .ai-strategy-box h5 {
+      color: #0369a1;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* Loading Spinner */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2.5rem;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0284c7;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">⚡ 족보해커 <span>AI</span></div>
+    <nav>
+      <ul>
+        <li><button class="nav-btn active" onclick="switchPage('page1', this)">1. 실시간 필기/자료 입력</button></li>
+        <li><button class="nav-btn" onclick="switchPage('page2', this)">2. 출제 유형 분석 엔진</button></li>
+        <li><button class="nav-btn" onclick="switchPage('page3', this)">3. AI 고효율 학습 리포트</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section id="page1" class="page active">
+      <h2>📝 실시간 필기 데이터 및 파일 등록</h2>
+      <p class="subtitle">수업 중 선생님이 강조한 필기, 힌트, 기출 프린트 파일을 저장하세요. (자동 실시간 저장)</p>
+      
+      <form id="memoForm">
+        <div style="display: flex; gap: 1rem;">
+          <div class="form-group" style="flex: 1;">
+            <label for="memoSubject">과목명</label>
+            <input type="text" id="memoSubject" placeholder="예: 수학, 한국사" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="memoTeacher">선생님 성함</label>
+            <input type="text" id="memoTeacher" placeholder="예: 김선생님" required>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+          <div class="form-group" style="flex: 1;">
+            <label for="memoType">문제 출제 유형 분류</label>
+            <select id="memoType">
+              <option value="서술형/논술형">✍️ 서술형/논술형 강조</option>
+              <option value="개념/어휘 정의">📖 개념/어휘 정의형</option>
+              <option value="기출 변형/응용">🧩 기출 변형/계산 응용</option>
+              <option value="유인물/날개 지문">📄 유인물/교과서 날개 지문</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="memoImportance">선생님 강조 중요도</label>
+            <select id="memoImportance">
+              <option value="상">🔥 상 (무조건 출제 예고)</option>
+              <option value="중">⚡ 중 (자주 강조함)</option>
+              <option value="하">🌱 하 (기본 설명/참고)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="memoContent">수업 강조 내용 / 필기 메모</label>
+          <textarea id="memoContent" rows="3" placeholder="예: 3단원 이차방정식 활용은 서술형 1번으로 출제. 조건 안 적으면 감점한다고 하심." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>기출문제 및 프린트 첨부 (PDF, 이미지)</label>
+          <div class="file-upload-box" onclick="document.getElementById('memoFileInput').click()">
+            📁 클릭하여 파일을 업로드하세요. (파일명 분석 엔진 자동 적용)
+            <input type="file" id="memoFileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
+          </div>
+          <div id="selectedFilesText"></div>
+        </div>
+
+        <button type="submit" class="btn">실시간 DB에 저장하기</button>
+      </form>
+
+      <div style="margin-top: 2.5rem;">
+        <h3>📌 현재 저장된 필기 & 데이터 (<span id="memoCount">0</span>개)</h3>
+        <div id="memoContainer" style="margin-top: 1rem;"></div>
+      </div>
+    </section>
+
+    <section id="page2" class="page">
+      <h2>📊 출제 유형 분석 프로그램</h2>
+      <p class="subtitle">축적된 필기 및 기출 데이터를 실시간 알고리즘으로 분석하여 선생님별 출제 패턴을 도출합니다.</p>
+
+      <div class="form-group">
+        <label for="analysisTargetSelect">분석할 과목/선생님 선택</label>
+        <select id="analysisTargetSelect" onchange="runAnalyticsEngine()">
+          <option value="">-- 선생님을 선택하세요 --</option>
+        </select>
+      </div>
+
+      <div id="analyticsDashboard" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <p style="font-size:0.85rem; color:#64748b;">총 수집 데이터</p>
+            <h3 id="statTotalNotes">0개</h3>
+          </div>
+          <div class="stat-card">
+            <p style="font-size:0.85rem; color:#64748b;">고득점 직결 (중요도 '상')</p>
+            <h3 id="statHighNotes" style="color:#ef4444;">0개</h3>
+          </div>
+          <div class="stat-card">
+            <p style="font-size:0.85rem; color:#64748b;">첨부된 기출/자료 파일</p>
+            <h3 id="statFiles" style="color:#10b981;">0개</h3>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem;">🎯 빈도수 기준 출제 유형 예측 비율</h3>
+        <div class="pattern-bar-container" id="patternBarContainer">
+          </div>
+
+        <div class="form-group" style="margin-top: 2rem;">
+          <label>선생님 특이 출제 스타일 추가 메모</label>
+          <textarea id="teacherStyleInput" rows="2" placeholder="예: 함정 문제를 자주 냄, 학습지 빈칸에서 객관식 출제율 높음"></textarea>
+          <button class="btn" style="margin-top: 0.5rem;" onclick="saveTeacherStyle()">스타일 업데이트</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="page3" class="page">
+      <h2>🎯 AI 시험 요약 & 고효율 학습 전략 리포트</h2>
+      <p class="subtitle">선생님의 출제 분석 결과와 AI 인증 뇌과학 학습법(인터리빙, 인출 연습)을 결합한 맞춤 전략입니다.</p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem;">
+        <div class="form-group">
+          <label for="planTargetSelect">시험 과목 및 선생님 선택</label>
+          <select id="planTargetSelect">
+            <option value="">-- 선생님을 선택하세요 --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="studyHours">남은 목표 공부 시간 (시간)</label>
+          <input type="number" id="studyHours" min="1" max="48" placeholder="예: 4 (4시간 안에 완벽 대비)" required>
+        </div>
+        <button class="btn" onclick="generateAIReport()">AI 초효율 학습 전략 리포트 생성</button>
+      </div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>선생님의 출제 빈도 알고리즘과 AI 메타인지 학습 알고리즘을 결합 분석 중입니다...</p>
+      </div>
+
+      <div id="resultBox" style="display: none; margin-top: 2rem; border-top: 2px solid #0284c7; padding-top: 1.5rem;">
+        <h3 id="reportTitle" style="color:#0f172a; margin-bottom:0.5rem;">💡 AI 맞춤형 학습 리포트</h3>
+        <p id="reportSummary" style="color:#475569; margin-bottom: 1.5rem; line-height: 1.5;"></p>
+
+        <h4 style="margin-bottom: 1rem; color:#0284c7;">📌 [우선순위 1위~전체] 필기 요약 & 고효율 AI 공부법</h4>
+        <div id="fullPriorityList"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // State management backed by localStorage
+    let memoData = JSON.parse(localStorage.getItem('zh_memos')) || [];
+    let teacherStyles = JSON.parse(localStorage.getItem('zh_styles')) || {};
+    let tempSelectedFiles = [];
+
+    // Initialize Page
+    window.onload = function() {
+      renderMemos();
+    };
+
+    function saveToStorage() {
+      localStorage.setItem('zh_memos', JSON.stringify(memoData));
+      localStorage.setItem('zh_styles', JSON.stringify(teacherStyles));
+    }
+
+    function switchPage(pageId, btnElement) {
+      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById(pageId).classList.add('active');
+      btnElement.classList.add('active');
+
+      if (pageId === 'page2' || pageId === 'page3') {
+        updateDropdowns();
+      }
+    }
+
+    // Page 1: Add Memo & Upload Handling
+    function handleFileSelect(event) {
+      tempSelectedFiles = Array.from(event.target.files).map(f => f.name);
+      const fileText = document.getElementById('selectedFilesText');
+      fileText.innerHTML = tempSelectedFiles.map(name => `<span class="file-tag">📄 ${name}</span>`).join(' ');
+    }
+
+    document.getElementById('memoForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const subject = document.getElementById('memoSubject').value.trim();
+      const teacher = document.getElementById('memoTeacher').value.trim();
+      const type = document.getElementById('memoType').value;
+      const importance = document.getElementById('memoImportance').value;
+      const content = document.getElementById('memoContent').value.trim();
+
+      const memo = {
+        id: Date.now(),
+        subject,
+        teacher,
+        type,
+        importance,
+        content,
+        files: [...tempSelectedFiles],
+        date: new Date().toLocaleDateString('ko-KR')
+      };
+
+      memoData.push(memo);
+      saveToStorage();
+
+      tempSelectedFiles = [];
+      document.getElementById('selectedFilesText').innerHTML = '';
+      this.reset();
+
+      renderMemos();
+      alert('실시간 DB에 필기와 파일 정보가 저장되었습니다.');
+    });
+
+    function renderMemos() {
+      const container = document.getElementById('memoContainer');
+      document.getElementById('memoCount').innerText = memoData.length;
+      container.innerHTML = '';
+
+      if (memoData.length === 0) {
+        container.innerHTML = '<p style="color: #94a3b8;">저장된 필기가 없습니다. 첫 필기를 등록해 보세요!</p>';
+        return;
+      }
+
+      memoData.slice().reverse().forEach(memo => {
+        const fileBadges = memo.files.map(f => `<span class="file-tag">📄 ${f}</span>`).join(' ');
+        const card = document.createElement('div');
+        card.className = 'memo-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-shadow:space-between; justify-content:space-between; align-items:center;">
+            <h4>[${memo.subject}] ${memo.teacher} 선생님</h4>
+            <button class="btn btn-danger" onclick="deleteMemo(${memo.id})">삭제</button>
+          </div>
+          <p style="margin-top:0.5rem;"><strong>[유형: ${memo.type}]</strong> (중요도: ${memo.importance})</p>
+          <p style="margin-top:0.25rem;">${memo.content}</p>
+          <div style="margin-top:0.5rem;">${fileBadges}</div>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-top:0.5rem;">작성일: ${memo.date}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function deleteMemo(id) {
+      if (confirm('이 필기 메모를 삭제하시겠습니까?')) {
+        memoData = memoData.filter(m => m.id !== id);
+        saveToStorage();
+        renderMemos();
+      }
+    }
+
+    function updateDropdowns() {
+      const targets = [...new Set(memoData.map(m => `${m.subject} - ${m.teacher} 선생님`))];
+      const selects = [document.getElementById('analysisTargetSelect'), document.getElementById('planTargetSelect')];
+
+      selects.forEach(select => {
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- 선생님 선택 --</option>';
+        targets.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          select.appendChild(opt);
+        });
+        select.value = currentVal;
+      });
+    }
+
+    // Page 2: Analytics Engine Logic
+    function runAnalyticsEngine() {
+      const target = document.getElementById('analysisTargetSelect').value;
+      const dashboard = document.getElementById('analyticsDashboard');
+
+      if (!target) {
+        dashboard.style.display = 'none';
+        return;
+      }
+
+      dashboard.style.display = 'block';
+      document.getElementById('teacherStyleInput').value = teacherStyles[target] || '';
+
+      const targetMemos = memoData.filter(m => `${m.subject} - ${m.teacher} 선생님` === target);
+      const highNotes = targetMemos.filter(m => m.importance === '상');
+      const totalFiles = targetMemos.reduce((acc, cur) => acc + cur.files.length, 0);
+
+      document.getElementById('statTotalNotes').innerText = `${targetMemos.length}개`;
+      document.getElementById('statHighNotes').innerText = `${highNotes.length}개`;
+      document.getElementById('statFiles').innerText = `${totalFiles}개`;
+
+      // Type Ratio Breakdown Algorithm
+      const typeCounts = {
+        '서술형/논술형': 0,
+        '개념/어휘 정의': 0,
+        '기출 변형/응용': 0,
+        '유인물/날개 지문': 0
+      };
+
+      targetMemos.forEach(m => {
+        if (typeCounts[m.type] !== undefined) typeCounts[m.type]++;
+      });
+
+      const totalCount = targetMemos.length || 1;
+      const container = document.getElementById('patternBarContainer');
+      container.innerHTML = '';
+
+      Object.keys(typeCounts).forEach(type => {
+        const count = typeCounts[type];
+        const percent = Math.round((count / totalCount) * 100);
+
+        const item = document.createElement('div');
+        item.className = 'pattern-bar-item';
+        item.innerHTML = `
+          <div class="pattern-info">
+            <span>${type}</span>
+            <span>${count}건 (${percent}%)</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" style="width: ${percent}%;"></div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function saveTeacherStyle() {
+      const target = document.getElementById('analysisTargetSelect').value;
+      if (!target) return;
+      teacherStyles[target] = document.getElementById('teacherStyleInput').value.trim();
+      saveToStorage();
+      alert('선생님 출제 스타일 데이터가 업데이트되었습니다.');
+    }
+
+    // Page 3: AI Report & High-Efficiency Learning Method Injector
+    function generateAIReport() {
+      const target = document.getElementById('planTargetSelect').value;
+      const hours = document.getElementById('studyHours').value;
+
+      if (!target || !hours) {
+        alert('과목/선생님과 공부 시간을 입력해 주세요.');
+        return;
+      }
+
+      const filteredMemos = memoData.filter(m => `${m.subject} - ${m.teacher} 선생님` === target);
+
+      if (filteredMemos.length === 0) {
+        alert('해당 선생님의 저장된 필기가 없습니다. 페이지 1에서 입력해 주세요.');
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('resultBox').style.display = 'none';
+
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultBox').style.display = 'block';
+
+        document.getElementById('reportTitle').innerText = `💡 ${target} AI 고효율 맞춤 학습 리포트`;
+        
+        const styleText = teacherStyles[target] ? `선생님 특징 [${teacherStyles[target]}]` : '등록된 출제 패턴';
+        document.getElementById('reportSummary').innerText = 
+          `입력된 ${filteredMemos.length}개의 필기 및 ${styleText}을 바탕으로, 제한된 ${hours}시간 내 최댓점 수확을 위한 [출제 우선순위]와 [AI 인지과학 학습법]을 결합한 전략입니다.`;
+
+        // Sort: Importance (상 -> 중 -> 하)
+        const importanceScore = { '상': 3, '중': 2, '하': 1 };
+        const sortedMemos = [...filteredMemos].sort((a, b) => importanceScore[b.importance] - importanceScore[a.importance]);
+
+        const container = document.getElementById('fullPriorityList');
+        container.innerHTML = '';
+
+        // AI High-efficiency learning strategies mapping
+        const aiStrategies = {
+          '서술형/논술형': {
+            method: '🧠 백지 복습법 & 조건 인출 연습 (Retrieval Practice)',
+            desc: '눈으로 읽지 말고 종이에 감점 요소(조건, 필수 키워드)를 직접 쓰며 외우세요. 서술형은 인출 연습이 핵심입니다.'
+          },
+          '개념/어휘 정의': {
+            method: '🔄 파인만 기법 & 교차 학습 (Feynman Technique)',
+            desc: '자신이 타인에게 용어를 쉬운 말로 설명할 수 있는지 확인하세요. 혼동하기 쉬운 어휘는 교차 비교하며 암기합니다.'
+          },
+          '기출 변형/응용': {
+            method: '⚡ 오답 패턴 타격 & 교차 풀이 (Interleaving)',
+            desc: '유사한 문제만 모아 풀지 말고 변형 문제를 섞어 풀어 뇌의 문제 인식 속도를 최상으로 올리세요.'
+          },
+          '유인물/날개 지문': {
+            method: '👁️ 시각적 맵핑 & 3초 블라인드 퀴즈',
+            desc: '교과서 날개/유인물 구석 지문은 정답 위치와 시각 이미지를 연상하며 3초 내 정답을 말하는 스피드 암기가 효과적입니다.'
+          }
+        };
+
+        sortedMemos.forEach((memo, idx) => {
+          let badgeClass = 'badge-low';
+          if (memo.importance === '상') badgeClass = 'badge-high';
+          if (memo.importance === '중') badgeClass = 'badge-mid';
+
+          const strategy = aiStrategies[memo.type] || aiStrategies['개념/어휘 정의'];
+          const fileText = memo.files.length > 0 ? `<p style="margin-top:0.4rem; font-size:0.85rem; color:#64748b;">📂 관련 첨부파일: ${memo.files.join(', ')}</p>` : '';
+
+          const card = document.createElement('div');
+          card.className = 'priority-card';
+          card.innerHTML = `
+            <span class="badge ${badgeClass}">우선순위 ${idx + 1}위 (중요도: ${memo.importance} / ${memo.type})</span>
+            <h4 style="color:#0f172a; margin-bottom:0.4rem;">${memo.content}</h4>
+            ${fileText}
+            
+            <div class="ai-strategy-box">
+              <h5>⚡ AI 추천 고효율 공부 전략: ${strategy.method}</h5>
+              <p style="color:#334155;">${strategy.desc}</p>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
