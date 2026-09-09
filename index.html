@@ -12,7 +12,7 @@
     header { background-color: #0f172a; color: #fff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .logo { font-size: 1.3rem; font-weight: 800; color: #38bdf8; cursor: pointer; }
     nav ul { display: flex; list-style: none; gap: 0.3rem; }
-    nav button { background: transparent; border: none; color: #94a3b8; font-size: 0.85rem; font-weight: 600; padding: 0.5rem 0.7.rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+    nav button { background: transparent; border: none; color: #94a3b8; font-size: 0.85rem; font-weight: 600; padding: 0.5rem 0.7rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
     nav button:hover, nav button.active { color: #fff; background-color: #334155; }
     
     /* Layout */
@@ -34,7 +34,6 @@
     .btn-secondary { background-color: #64748b; }
     .btn-secondary:hover { background-color: #475569; }
     .btn-danger { background-color: #ef4444; padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; }
-    .btn-success { background-color: #10b981; }
 
     /* UI Cards & Badges */
     .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
@@ -47,6 +46,11 @@
     /* Progress Bar */
     .progress-bg { background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 0.4rem; }
     .progress-fill { background: #0284c7; height: 100%; width: 0%; transition: width 0.4s ease; }
+
+    /* Checkbox list for Todo */
+    .todo-item { display: flex; align-items: center; gap: 0.75rem; background: #fff; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 0.5rem; }
+    .todo-item.done { background: #f1f5f9; text-decoration: line-through; color: #94a3b8; }
+    .todo-item input[type="checkbox"] { width: 1.1rem; height: 1.1rem; cursor: pointer; }
 
     /* Grid Layouts for Home */
     .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
@@ -81,7 +85,7 @@
         <li><button class="nav-btn" onclick="switchPage('home')">🏠 홈</button></li>
         <li><button class="nav-btn" onclick="switchPage('page1')">1. 필기</button></li>
         <li><button class="nav-btn" onclick="switchPage('page2')">2. 분석</button></li>
-        <li><button class="nav-btn" onclick="switchPage('page3')">3. 리포트</button></li>
+        <li><button class="nav-btn" onclick="switchPage('page3')">3. 스케줄러</button></li>
         <li><button class="nav-btn" onclick="switchPage('page4')">4. 피드백</button></li>
         <li><button class="nav-btn" onclick="switchPage('page5')">5. 퀴즈</button></li>
       </ul>
@@ -103,7 +107,6 @@
           <button class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="toggleDDayForm()">+ 과목 추가</button>
         </div>
 
-        <!-- D-Day Form (Hidden) -->
         <div id="ddayFormBox" style="display:none; background:#f8fafc; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
           <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
             <input type="text" id="ddaySubject" placeholder="과목명 (예: 수학)" style="flex:1;">
@@ -118,16 +121,16 @@
       <!-- Achievement Progress -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:1rem;">
         <div class="card">
-          <h4>🔥 오늘 목표 달성률</h4>
+          <h4>🔥 오늘 공부 미션 달성률</h4>
           <div style="font-size:1.4rem; font-weight:800; color:#0284c7; margin-top:0.2rem;" id="dailyRateText">0%</div>
           <div class="progress-bg"><div id="dailyProgressBar" class="progress-fill"></div></div>
-          <p style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">오늘 권장 미션 및 퀴즈 달성도</p>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">3페이지 미션 체크 수 기준</p>
         </div>
         <div class="card">
-          <h4>🏆 전체 과목 시험 준비도</h4>
+          <h4>🧩 개념 퀴즈 정답률</h4>
           <div style="font-size:1.4rem; font-weight:800; color:#10b981; margin-top:0.2rem;" id="totalRateText">0%</div>
           <div class="progress-bg"><div id="totalProgressBar" class="progress-fill" style="background:#10b981;"></div></div>
-          <p style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">전체 필기 및 퀴즈 통과율</p>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">5페이지 단답형 퀴즈 통과율</p>
         </div>
       </div>
 
@@ -136,7 +139,7 @@
       <div class="menu-grid">
         <div class="menu-card" onclick="switchPage('page1')">📝 1. 필기/기출</div>
         <div class="menu-card" onclick="switchPage('page2')">📊 2. 출제 분석</div>
-        <div class="menu-card" onclick="switchPage('page3')">🎯 3. 메인 리포트</div>
+        <div class="menu-card" onclick="switchPage('page3')">🎯 3. AI 스케줄러</div>
         <div class="menu-card" onclick="switchPage('page4')">🧩 4. 적중 피드백</div>
         <div class="menu-card" onclick="switchPage('page5')">💡 5. 단답형 퀴즈</div>
       </div>
@@ -170,7 +173,7 @@
           </div>
         </div>
         <div class="form-group"><label>핵심 요약 필기 내용 (개념 설명)</label><textarea id="memoContent" rows="2" placeholder="예: 이차방정식에서 근의 개수를 판단하는 식은 판별식이다." required></textarea></div>
-        <div class="form-group"><label>단답형 퀴즈 정답 키워드 (페이지 5 연동용)</label><input type="text" id="memoQuizAns" placeholder="예: 판별식" required></div>
+        <div class="form-group"><label>단답형 퀴즈 정답 키워드 (5페이지 연동용)</label><input type="text" id="memoQuizAns" placeholder="예: 판별식" required></div>
         <button type="submit" class="btn">실시간 DB 저장</button>
       </form>
       <div style="margin-top: 1.5rem;">
@@ -195,28 +198,21 @@
       <button class="btn btn-secondary" style="margin-top:1.5rem;" onclick="switchPage('home')">⬅️ 홈으로 돌아가기</button>
     </section>
 
-    <!-- PAGE 3: AI 메인 리포트 -->
+    <!-- PAGE 3: AI 메인 스케줄러 (오늘의 5대 공부 미션) -->
     <section id="page3" class="page">
-      <h2>🎯 3. 메인 AI 우선순위 리포트</h2>
-      <p class="subtitle">퀴즈 오답 및 피드백이 반영되어 복습 시간이 자동 재배분된 최종 리포트입니다.</p>
+      <h2>🎯 3. D-Day 기반 AI 오늘의 공부 스케줄러</h2>
+      <p class="subtitle">D-Day와 필기 데이터를 바탕으로 생성된 오늘 추천 공부 미션 5개입니다.</p>
       <div style="background:#f8fafc; padding:1rem; border-radius:8px; margin-bottom:1rem;">
-        <div style="display:flex; gap:0.5rem;">
-          <div class="form-group" style="flex:2;">
-            <label>과목/선생님 선택</label>
-            <select id="planTargetSelect"><option value="">-- 선택 --</option></select>
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label>목표 공부시간 (분)</label>
-            <input type="number" id="studyMinutes" value="120" min="30">
-          </div>
+        <div class="form-group">
+          <label>과목 선택</label>
+          <select id="planTargetSelect" onchange="generateMissionList()"><option value="">-- 과목 선택 --</option></select>
         </div>
-        <button class="btn" onclick="generateReport()">통합 AI 리포트 생성</button>
       </div>
 
-      <div id="resultBox" style="display:none;">
-        <h3 id="reportTitle"></h3>
-        <p id="reportMeta" style="font-size:0.85rem; color:#64748b; margin-bottom:1rem;"></p>
-        <div id="reportList"></div>
+      <div id="missionBox" style="display:none;">
+        <h3 id="missionTitle" style="color:#0284c7; margin-bottom:0.5rem;"></h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:1rem;">미션을 완료하고 체크박스를 클릭하면 오늘 달성률이 반영됩니다.</p>
+        <div id="missionListContainer"></div>
       </div>
       <button class="btn btn-secondary" style="margin-top:1rem;" onclick="switchPage('home')">⬅️ 홈으로 돌아가기</button>
     </section>
@@ -224,7 +220,7 @@
     <!-- PAGE 4: 적중 피드백 -->
     <section id="page4" class="page">
       <h2>🎯 4. 이전 시험 적중률 & 선생님 피드백</h2>
-      <p class="subtitle">선생님 특이 성향을 등록하여 3번 리포트 알고리즘을 튜닝합니다.</p>
+      <p class="subtitle">선생님 특이 성향을 등록하여 퀴즈 및 학습 패턴을 케어합니다.</p>
       <div class="form-group">
         <label>선생님 선택</label>
         <select id="feedbackTargetSelect" onchange="loadFeedback()"><option value="">-- 선택 --</option></select>
@@ -234,22 +230,29 @@
           <label>선생님 특이 출제 패턴 피드백 메모</label>
           <textarea id="feedbackText" rows="2" placeholder="예: 학습지 구석 개념에서 객관식을 많이 냄"></textarea>
         </div>
-        <button class="btn" onclick="saveFeedback()">피드백 적용 (3번 리포트에 반영)</button>
+        <button class="btn" onclick="saveFeedback()">피드백 저장</button>
       </div>
       <button class="btn btn-secondary" style="margin-top:1.5rem;" onclick="switchPage('home')">⬅️ 홈으로 돌아가기</button>
     </section>
 
-    <!-- PAGE 5: 단답형 퀴즈 (개념 목록 & 문풀 소페이지 연동) -->
+    <!-- PAGE 5: 단답형 퀴즈 -->
     <section id="page5" class="page">
       <!-- 5-1: 개념 목록 화면 -->
       <div id="quizListView">
         <h2>💡 5. 개념별 단답형 퀴즈</h2>
-        <p class="subtitle">개념 카드를 선택하여 문풀을 진행하세요. (오답 시 3번 리포트 복습시간 증가)</p>
+        <p class="subtitle">개념 카드를 선택하여 메타인지 문풀을 진행하세요. (정답률 지표 독립 반영)</p>
+
+        <!-- 필터 버튼 (오답 필터링 업그레이드) -->
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+          <button class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="renderQuizList('all')">전체 보기</button>
+          <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:#ef4444;" onclick="renderQuizList('wrong')">❌ 틀린 문제만 보기</button>
+        </div>
+
         <div id="quizConceptList"></div>
         <button class="btn btn-secondary" style="margin-top:1rem;" onclick="switchPage('home')">⬅️ 홈으로 돌아가기</button>
       </div>
 
-      <!-- 5-2: 문풀 전용 소페이지 (Sub-Page) -->
+      <!-- 5-2: 문풀 소페이지 -->
       <div id="quizSolveView" style="display:none;">
         <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-bottom:1rem;" onclick="exitQuizSolve()">⬅️ 개념 목록으로 돌아가기</button>
         <h3 id="quizSolveTitle" style="color:#0284c7; margin-bottom:0.5rem;"></h3>
@@ -263,26 +266,26 @@
           <button class="btn" onclick="submitQuizAnswer()">정답 제출하기</button>
         </div>
 
-        <!-- 정오 판정 & 풀이 출력 박스 -->
+        <!-- 정오 판정 박스 -->
         <div id="quizResultCard" class="card" style="display:none; margin-top:1rem;">
           <h4 id="quizResultStatus"></h4>
           <p style="margin-top:0.4rem; font-size:0.9rem;" id="quizResultExplanation"></p>
-          <button class="btn btn-secondary" style="margin-top:0.75rem; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="exitQuizSolve()">3번 리포트 / 목록으로 복귀</button>
+          <button class="btn btn-secondary" style="margin-top:0.75rem; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="exitQuizSolve()">목록으로 복귀</button>
         </div>
       </div>
     </section>
   </main>
 
   <script>
-    // State Management
+    // Global State Management
     let userName = localStorage.getItem('zh_username') || '';
     let ddays = JSON.parse(localStorage.getItem('zh_ddays')) || [];
     let memos = JSON.parse(localStorage.getItem('zh_memos')) || [];
     let feedbacks = JSON.parse(localStorage.getItem('zh_feedbacks')) || {};
-    let quizResults = JSON.parse(localStorage.getItem('zh_quiz_res')) || {}; // memoId: {correct: bool}
+    let quizResults = JSON.parse(localStorage.getItem('zh_quiz_res')) || {}; 
+    let todoStatus = JSON.parse(localStorage.getItem('zh_todo_status')) || {}; // { subjectKey: [true, false, ...] }
     let currentQuizMemoId = null;
 
-    // App Initialization
     window.onload = function() {
       if(!userName) {
         document.getElementById('authOverlay').style.display = 'flex';
@@ -299,6 +302,7 @@
       localStorage.setItem('zh_memos', JSON.stringify(memos));
       localStorage.setItem('zh_feedbacks', JSON.stringify(feedbacks));
       localStorage.setItem('zh_quiz_res', JSON.stringify(quizResults));
+      localStorage.setItem('zh_todo_status', JSON.stringify(todoStatus));
       renderAll();
     }
 
@@ -324,7 +328,7 @@
       document.getElementById(pageId).classList.add('active');
 
       if(pageId === 'page2' || pageId === 'page3' || pageId === 'page4') updateDropdowns();
-      if(pageId === 'page5') renderQuizList();
+      if(pageId === 'page5') renderQuizList('all');
     }
 
     function renderAll() {
@@ -360,7 +364,6 @@
       const container = document.getElementById('ddayContainer');
       container.innerHTML = ddays.length ? '' : '<p style="font-size:0.85rem; color:#94a3b8;">등록된 D-Day가 없습니다.</p>';
       
-      // Calculate D-Day & Sort
       const today = new Date();
       today.setHours(0,0,0,0);
 
@@ -387,27 +390,29 @@
       });
     }
 
-    // Rates Calculation
+    // Overall Progress & Rates Calculation
     function calculateProgress() {
-      const totalMemos = memos.length;
-      if(totalMemos === 0) {
-        document.getElementById('dailyRateText').innerText = '0%';
-        document.getElementById('dailyProgressBar').style.width = '0%';
-        document.getElementById('totalRateText').innerText = '0%';
-        document.getElementById('totalProgressBar').style.width = '0%';
-        return;
-      }
+      // 1. Daily Mission Progress (3페이지 미션 체크 수)
+      let totalMissionsCount = 0;
+      let completedMissionsCount = 0;
 
-      const testedCount = Object.keys(quizResults).length;
-      const passedCount = Object.values(quizResults).filter(r => r.correct).length;
+      Object.keys(todoStatus).forEach(key => {
+        const arr = todoStatus[key] || [];
+        totalMissionsCount += arr.length;
+        completedMissionsCount += arr.filter(b => b === true).length;
+      });
 
-      const dailyRate = Math.round((testedCount / totalMemos) * 100);
-      const totalRate = Math.round((passedCount / totalMemos) * 100);
-
+      const dailyRate = totalMissionsCount ? Math.round((completedMissionsCount / totalMissionsCount) * 100) : 0;
       document.getElementById('dailyRateText').innerText = `${dailyRate}%`;
       document.getElementById('dailyProgressBar').style.width = `${dailyRate}%`;
-      document.getElementById('totalRateText').innerText = `${totalRate}%`;
-      document.getElementById('totalProgressBar').style.width = `${totalRate}%`;
+
+      // 2. Quiz Pass Rate (5페이지 퀴즈 통과율)
+      const testedCount = Object.keys(quizResults).length;
+      const passedCount = Object.values(quizResults).filter(r => r.correct).length;
+      const quizRate = testedCount ? Math.round((passedCount / testedCount) * 100) : 0;
+
+      document.getElementById('totalRateText').innerText = `${quizRate}%`;
+      document.getElementById('totalProgressBar').style.width = `${quizRate}%`;
     }
 
     // PAGE 1 Logic
@@ -453,8 +458,18 @@
     }
 
     function updateDropdowns() {
+      const subjects = [...new Set(memos.map(m => m.subject))];
       const targets = [...new Set(memos.map(m => `${m.subject} - ${m.teacher}`))];
-      ['analysisTargetSelect', 'planTargetSelect', 'feedbackTargetSelect'].forEach(id => {
+
+      const p3Sel = document.getElementById('planTargetSelect');
+      if(p3Sel) {
+        const cur = p3Sel.value;
+        p3Sel.innerHTML = '<option value="">-- 과목 선택 --</option>';
+        subjects.forEach(s => { const opt = document.createElement('option'); opt.value = s; opt.textContent = s; p3Sel.appendChild(opt); });
+        p3Sel.value = cur;
+      }
+
+      ['analysisTargetSelect', 'feedbackTargetSelect'].forEach(id => {
         const sel = document.getElementById(id);
         if(!sel) return;
         const cur = sel.value;
@@ -487,6 +502,69 @@
       });
     }
 
+    // PAGE 3 AI Mission Scheduler (Today's 5 Missions)
+    function generateMissionList() {
+      const subject = document.getElementById('planTargetSelect').value;
+      const box = document.getElementById('missionBox');
+      if(!subject) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+
+      // Find D-Day info for action verb adjustment
+      const ddayObj = ddays.find(d => d.subject === subject);
+      let ddayText = "D-Day 미설정";
+      let diffDays = 10;
+      if(ddayObj) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        diffDays = Math.ceil((new Date(ddayObj.date) - today) / (1000 * 60 * 60 * 24));
+        ddayText = diffDays === 0 ? "D-Day" : `D-${diffDays}`;
+      }
+
+      document.getElementById('missionTitle').innerText = `🎯 [${subject}] ${ddayText}일 전 오늘의 AI 맞춤 미션`;
+
+      // Smart Action Verb Mission Generation
+      let verb1 = "기본 개념 파악 및 단원 독해";
+      let verb2 = "기본 문제 풀이 15문항";
+      if(diffDays <= 7 && diffDays > 2) {
+        verb1 = "유형별 응용 기출 문제 풀이";
+        verb2 = "틀린 문제 오답 노트 정리 및 재회독";
+      } else if(diffDays <= 2) {
+        verb1 = "시험 직전 핵심 단어/공식 초벼락치기 암기";
+        verb2 = "필기 프린트 구석 개념 최종 회독";
+      }
+
+      const defaultMissions = [
+        `${subject} 1단원 ${verb1}`,
+        `${subject} 주요 개념 ${verb2}`,
+        `${subject} 교과서/학습지 주요 필기 읽기`,
+        `${subject} 단어 및 오답 정리`,
+        `${subject} 마무리는 5페이지 단답형 퀴즈로 검증하기`
+      ];
+
+      if(!todoStatus[subject]) {
+        todoStatus[subject] = [false, false, false, false, false];
+      }
+
+      const container = document.getElementById('missionListContainer');
+      container.innerHTML = '';
+
+      defaultMissions.forEach((mText, idx) => {
+        const isDone = todoStatus[subject][idx];
+        const div = document.createElement('div');
+        div.className = `todo-item ${isDone ? 'done' : ''}`;
+        div.innerHTML = `
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTodo('${subject}', ${idx})">
+          <span>${idx + 1}. ${mText}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleTodo(subject, idx) {
+      todoStatus[subject][idx] = !todoStatus[subject][idx];
+      saveData();
+      generateMissionList();
+    }
+
     // PAGE 4 Feedback
     function loadFeedback() {
       const target = document.getElementById('feedbackTargetSelect').value;
@@ -502,75 +580,30 @@
       if(!target) return;
       feedbacks[target] = { text: document.getElementById('feedbackText').value.trim() };
       saveData();
-      alert('피드백이 반영되었습니다.');
-    }
-
-    // PAGE 3 AI Report
-    function generateReport() {
-      const target = document.getElementById('planTargetSelect').value;
-      const totalMins = parseInt(document.getElementById('studyMinutes').value) || 120;
-      if(!target) { alert('과목/선생님을 선택하세요.'); return; }
-
-      const filtered = memos.filter(m => `${m.subject} - ${m.teacher}` === target);
-      if(!filtered.length) { alert('필기 데이터가 없습니다.'); return; }
-
-      document.getElementById('resultBox').style.display = 'block';
-      const fb = feedbacks[target] || {};
-      document.getElementById('reportTitle').innerText = `💡 ${target} AI 복습 리포트`;
-      document.getElementById('reportMeta').innerText = `피드백 반영: [${fb.text || '기본 성향'}] | 총 목표시간: ${totalMins}분`;
-
-      const baseScore = { '상': 30, '중': 20, '하': 10 };
-      let items = filtered.map(m => {
-        let score = baseScore[m.importance] || 10;
-        const qRes = quizResults[m.id];
-        if(qRes && qRes.correct === false) score += 20; // О답 penalty time add
-        return { ...m, score };
-      });
-
-      items.sort((a, b) => b.score - a.score);
-      const totalScore = items.reduce((a, c) => a + c.score, 0);
-
-      const list = document.getElementById('reportList');
-      list.innerHTML = '';
-
-      items.forEach((item, idx) => {
-        const allocatedMin = Math.round((item.score / totalScore) * totalMins);
-        const qStatus = quizResults[item.id];
-        let quizBadge = `<span class="badge" style="background:#64748b;">퀴즈 미응시</span>`;
-        if(qStatus) {
-          quizBadge = qStatus.correct 
-            ? `<span class="badge badge-success">⭕ 퀴즈 통과</span>`
-            : `<span class="badge badge-urgent">❌ 오답 (복습시간 +재배분됨)</span>`;
-        }
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.borderLeft = '5px solid #0284c7';
-        card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
-            <div>
-              <span class="badge badge-dday">${idx + 1}순위</span>
-              ${quizBadge}
-            </div>
-            <strong style="color:#0284c7;">⏱️ 권장: ${allocatedMin}분</strong>
-          </div>
-          <h4 style="margin-bottom:0.3rem;">${item.content}</h4>
-          <p style="font-size:0.8rem; color:#64748b;">[${item.type}] | 중요도: ${item.importance}</p>
-          <button class="btn" style="margin-top:0.5rem; padding:0.3rem 0.6rem; font-size:0.78rem;" onclick="startQuizFromReport(${item.id})">🧩 퀴즈 풀고 검증하기</button>
-        `;
-        list.appendChild(card);
-      });
+      alert('피드백이 저장되었습니다.');
     }
 
     // PAGE 5 Quiz System
-    function renderQuizList() {
+    function renderQuizList(filterMode = 'all') {
       document.getElementById('quizListView').style.display = 'block';
       document.getElementById('quizSolveView').style.display = 'none';
 
       const container = document.getElementById('quizConceptList');
-      container.innerHTML = memos.length ? '' : '<p style="color:#94a3b8; font-size:0.85rem;">등록된 개념 필기가 없습니다. 1페이지에서 추가하세요.</p>';
+      container.innerHTML = '';
 
-      memos.forEach(m => {
+      let targetMemos = memos;
+      if(filterMode === 'wrong') {
+        targetMemos = memos.filter(m => quizResults[m.id] && quizResults[m.id].correct === false);
+      }
+
+      if(!targetMemos.length) {
+        container.innerHTML = filterMode === 'wrong' 
+          ? '<p style="color:#94a3b8; font-size:0.85rem;">❌ 오답인 문제가 없습니다! 완벽합니다.</p>'
+          : '<p style="color:#94a3b8; font-size:0.85rem;">등록된 개념 필기가 없습니다. 1페이지에서 추가하세요.</p>';
+        return;
+      }
+
+      targetMemos.forEach(m => {
         const qRes = quizResults[m.id];
         let statusBadge = '<span class="badge" style="background:#64748b;">미응시</span>';
         if(qRes) {
@@ -589,11 +622,6 @@
         `;
         container.appendChild(div);
       });
-    }
-
-    function startQuizFromReport(memoId) {
-      switchPage('page5');
-      openQuizSolve(memoId);
     }
 
     function openQuizSolve(memoId) {
@@ -622,11 +650,11 @@
       resCard.style.display = 'block';
       if(userAns.toLowerCase() === memo.quizAns.toLowerCase()) {
         resStatus.innerHTML = `<span style="color:#10b981;">🎉 정답입니다! (⭕ Perfect)</span>`;
-        resExp.innerHTML = `<strong>정답:</strong> ${memo.quizAns}<br><strong>풀이/해설:</strong> 개념을 정확히 파악하고 있습니다. 3번 리포트 달성률이 상승합니다.`;
+        resExp.innerHTML = `<strong>정답:</strong> ${memo.quizAns}<br><strong>풀이/해설:</strong> 개념을 정확히 파악하고 있습니다. 개념 정답률 지표가 상승합니다.`;
         quizResults[memo.id] = { correct: true };
       } else {
         resStatus.innerHTML = `<span style="color:#ef4444;">❌ 오답입니다! (Needs Review)</span>`;
-        resExp.innerHTML = `<strong>입력한 답:</strong> ${userAns} <br><strong>정답:</strong> ${memo.quizAns}<br><strong>풀이/해설:</strong> 해당 개념 미흡으로 판단되어 3번 리포트의 복습 시간이 자동 추가 재배분됩니다.`;
+        resExp.innerHTML = `<strong>입력한 답:</strong> ${userAns} <br><strong>정답:</strong> ${memo.quizAns}<br><strong>풀이/해설:</strong> 해당 개념에 대한 정밀 복습이 필요합니다. 5페이지 오답 필터에서 재도전해보세요.`;
         quizResults[memo.id] = { correct: false };
       }
 
@@ -634,7 +662,7 @@
     }
 
     function exitQuizSolve() {
-      renderQuizList();
+      renderQuizList('all');
     }
   </script>
 </body>
