@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>족보해커 - 시험 대비 스마트 보조 웹앱</title>
+    <!-- Pretendard CDN -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Canvas Confetti CDN (퀴즈 정답 폭죽 효과) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tesseract.js CDN (OCR 텍스트 추출) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f7fa;
+            --main-blue: #709bc1;
+            --main-blue-hover: #5a84a9;
+            --light-blue: #e8f1f8;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e2e8f0;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --accent-yellow: #f1c40f;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #dbe4ee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* 모바일 480px 컨테이너 */
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 900px;
+            background-color: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (min-width: 481px) {
+            #app-container {
+                height: 92vh;
+                border-radius: 24px;
+            }
+        }
+
+        /* Header */
+        header {
+            height: 56px;
+            background-color: var(--card-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--main-blue);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--light-blue);
+        }
+
+        /* Slide Sidebar */
+        #sidebar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #sidebar {
+            position: absolute;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--card-bg);
+            z-index: 100;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            background-color: var(--light-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--main-blue-hover);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .sidebar-menu li {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: var(--light-blue);
+            color: var(--main-blue);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Main View Container */
+        #content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            position: relative;
+        }
+
+        .view-page {
+            display: none;
+            animation: fadeIn 0.25s ease-in-out;
+        }
+
+        .view-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Basic Card & Elements */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+        }
+
+        .btn {
+            background-color: var(--main-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background-color: var(--main-blue-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--light-blue);
+            color: var(--main-blue-hover);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d5e4f1;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-control:focus {
+            border-color: var(--main-blue);
+        }
+
+        select.input-control {
+            background-color: white;
+        }
+
+        /* Auth View */
+        #auth-view {
+            max-width: 360px;
+            margin: 40px auto 0;
+        }
+
+        .auth-toggle {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            color: var(--main-blue);
+            border-bottom: 2px solid var(--main-blue);
+            margin-bottom: -2px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        /* Home View Dashboard */
+        .readiness-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .circle-chart {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+
+        .circle-chart svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: var(--light-blue);
+            stroke-width: 12;
+        }
+
+        .circle-progress {
+            fill: none;
+            stroke: var(--main-blue);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 408;
+            stroke-dashoffset: 408;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .chart-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .chart-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--main-blue-hover);
+        }
+
+        .chart-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* 3 Standalone Stat Cards */
+        .stat-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            background: var(--light-blue);
+            border-radius: 10px;
+            padding: 10px 6px;
+            text-align: center;
+        }
+
+        .stat-card-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+
+        .stat-card-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--main-blue-hover);
+        }
+
+        /* D-Day List */
+        .dday-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+
+        .dday-badge {
+            background-color: var(--main-blue);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Note Collector View */
+        .ocr-preview-box {
+            max-height: 120px;
+            width: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .micro-copy {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* Note TOP Filter & Search */
+        .search-filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .note-item {
+            border-left: 4px solid var(--main-blue);
+        }
+
+        .note-item.importance-상 { border-left-color: var(--accent-red); }
+        .note-item.importance-중 { border-left-color: var(--accent-yellow); }
+        .note-item.importance-하 { border-left-color: var(--accent-green); }
+
+        .note-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            background: var(--light-blue);
+            color: var(--main-blue-hover);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* Scheduler Task List */
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--main-blue);
+            cursor: pointer;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        /* Feedback Item */
+        .feedback-item {
+            background-color: #fff9e6;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* Quiz Overlay & Modal */
+        .quiz-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .quiz-modal.active {
+            display: flex;
+        }
+
+        .quiz-card {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .blank-space {
+            display: inline-block;
+            border-bottom: 2px solid var(--main-blue);
+            padding: 0 10px;
+            color: var(--main-blue);
+            font-weight: 700;
+        }
+
+        /* Loader */
+        .spinner {
+            border: 3px solid var(--light-blue);
+            border-top: 3px solid var(--main-blue);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Header -->
+    <header>
+        <button class="icon-btn" id="btn-sidebar-toggle">☰</button>
+        <div class="header-title">
+            <span>🛡️</span> 족보해커
+        </div>
+        <button class="icon-btn" id="btn-logout" title="로그아웃" style="display: none;">🚪</button>
+    </header>
+
+    <!-- Slide Sidebar Overlay & Navigation -->
+    <div id="sidebar-overlay"></div>
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <div class="user-info" id="sidebar-user-name">게스트 사용자</div>
+            <button class="icon-btn" id="btn-sidebar-close">✕</button>
+        </div>
+        <ul class="sidebar-menu">
+            <li data-target="page-home">📊 메인 홈 (준비도)</li>
+            <li data-target="page-collector">📷 1페이지: 필기 수집 (OCR)</li>
+            <li data-target="page-top">🔝 2페이지: 개념 족보 TOP</li>
+            <li data-target="page-scheduler">📅 3페이지: AI 스케줄러</li>
+            <li data-target="page-feedback">💡 4페이지: 적중 피드백</li>
+            <li data-target="page-quiz">🧩 5페이지: 개념 퀴즈</li>
+        </ul>
+        <div class="sidebar-footer">
+            <p style="font-size: 11px; color: var(--text-secondary); text-align: center;">족보해커 v2.5 Mobile Version</p>
+        </div>
+    </nav>
+
+    <!-- Content Area -->
+    <main id="content-area">
+
+        <!-- 0. Auth Page (로그인/회원가입) -->
+        <section id="page-auth" class="view-page active">
+            <div id="auth-view" class="card">
+                <div class="auth-toggle">
+                    <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">로그인</div>
+                    <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">회원가입</div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="form-login" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>아이디</label>
+                        <input type="text" class="input-control" id="login-id" required>
+                    </div>
+                    <div class="input-group">
+                        <label>비밀번호</label>
+                        <input type="password" class="input-control" id="login-pw" required>
+                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="login-keep"> 로그인 상태 유지
+                    </label>
+                    <button type="submit" class="btn">로그인</button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="form-signup" onsubmit="handleSignup(event)" style="display: none;">
+                    <div class="input-group">
+                        <label>아이디</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" class="input-control" id="signup-id" required>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="checkDuplicateId()">중복 확인</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>비밀번호</label>
+                        <input type="password" class="input-control" id="signup-pw" required>
+                    </div>
+                    <button type="submit" class="btn">회원가입 완료</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 1. Home Page (대시보드) -->
+        <section id="page-home" class="view-page">
+            <!-- 통합 시험 준비도 서클 차트 -->
+            <div class="card">
+                <div class="card-title">통합 시험 준비도</div>
+                <div class="readiness-container">
+                    <div class="circle-chart">
+                        <svg viewBox="0 0 150 150">
+                            <circle class="circle-bg" cx="75" cy="75" r="65"></circle>
+                            <circle class="circle-progress" id="readiness-circle" cx="75" cy="75" r="65"></circle>
+                        </svg>
+                        <div class="chart-center-text">
+                            <div class="chart-value" id="readiness-val">0%</div>
+                            <div class="chart-label">실시간 연동</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 독립된 지표 카드 3종 -->
+                <div class="stat-cards-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-title">오늘의 퀴즈 정답률</div>
+                        <div class="stat-card-value" id="stat-quiz-today">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">총 목표 달성률</div>
+                        <div class="stat-card-value" id="stat-task-today">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">전체 목표 달성률</div>
+                        <div class="stat-card-value" id="stat-total-progress">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D-Day 관리 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    시험 D-Day
+                    <button class="btn btn-secondary btn-sm" onclick="toggleDDayInput()">+ 추가</button>
+                </div>
+                
+                <div id="dday-input-box" style="display: none; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                        <input type="text" id="dday-title" class="input-control" placeholder="시험 과목명">
+                        <input type="date" id="dday-date" class="input-control">
+                    </div>
+                    <button class="btn btn-sm" onclick="addDDay()">저장</button>
+                </div>
+
+                <div id="dday-list">
+                    <!-- D-Day 항목 등록 영역 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 필기 수집 (OCR) -->
+        <section id="page-collector" class="view-page">
+            <div class="card">
+                <div class="card-title">필기 데이터 수집</div>
+                <form id="form-note" onsubmit="saveNote(event)">
+                    <div class="input-group">
+                        <label>과목명</label>
+                        <input type="text" id="note-subject" class="input-control" required placeholder="예: 국어, 한국사">
+                    </div>
+                    <div class="input-group">
+                        <label>선생님 이름</label>
+                        <input type="text" id="note-teacher" class="input-control" required placeholder="예: 김선생님">
+                    </div>
+                    <div class="input-group">
+                        <label>중요도</label>
+                        <select id="note-importance" class="input-control">
+                            <option value="상">상 (매우 중요)</option>
+                            <option value="중" selected>중 (보통)</option>
+                            <option value="하">하 (참고)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>정답 키워드 (퀴즈 빈칸 생성용)</label>
+                        <input type="text" id="note-keyword" class="input-control" required placeholder="예: 탕평책, 미토콘드리아">
+                    </div>
+
+                    <!-- 이미지 OCR 및 보완 UX -->
+                    <div class="input-group">
+                        <label>필기 사진 업로드 (OCR 명암/밝기 보정 적용)</label>
+                        <input type="file" id="note-image" accept="image/*" class="input-control" onchange="processImageOCR(event)">
+                        <img id="ocr-preview" class="ocr-preview-box" alt="필기 미리보기">
+                        <div id="ocr-loading" style="display: none; font-size: 12px; color: var(--main-blue); margin-top: 4px;">
+                            <span class="spinner"></span> 텍스트 추출 중...
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label>필기 내용</label>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="pasteFromClipboard()">📋 클립보드 붙여넣기</button>
+                        </div>
+                        <textarea id="note-content" class="input-control" rows="4" required placeholder="필기 내용을 입력하거나 사진을 업로드하세요."></textarea>
+                        <p class="micro-copy">💡 손글씨나 칠판 반사로 OCR 인식이 원활하지 않을 경우, 갤러리/카메라에서 복사한 텍스트를 클립보드 버튼으로 한 번에 붙여넣으세요.</p>
+                    </div>
+
+                    <button type="submit" class="btn">족보에 필기 저장하기</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. 개념 족보 TOP -->
+        <section id="page-top" class="view-page">
+            <div class="card">
+                <div class="card-title">개념 족보 TOP</div>
+                
+                <!-- 필터 및 키워드 검색바 -->
+                <div class="search-filter-bar">
+                    <select id="filter-subject" class="input-control" onchange="renderNotes()">
+                        <option value="all">전체 과목</option>
+                    </select>
+                    <select id="filter-teacher" class="input-control" onchange="renderNotes()">
+                        <option value="all">전체 선생님</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="search-keyword" class="input-control" placeholder="🔍 키워드 검색..." oninput="renderNotes()">
+                </div>
+
+                <!-- 필기 목록 -->
+                <div id="note-list">
+                    <!-- 필기 데이터 카드 출력 영역 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. AI 스케줄러 -->
+        <section id="page-scheduler" class="view-page">
+            <div class="card">
+                <div class="card-title">AI 학습 스케줄 생성기</div>
+                <div class="input-group">
+                    <label>학습 과목 선택</label>
+                    <select id="schedule-subject" class="input-control"></select>
+                </div>
+                <div class="input-group">
+                    <label>목표 공부 시간 (분)</label>
+                    <input type="number" id="schedule-time" class="input-control" placeholder="예: 60" value="60">
+                </div>
+                <button class="btn" onclick="generateSchedule()">오늘의 미션 5개 생성하기</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    오늘의 학습 미션
+                    <span id="task-progress-label" style="font-size: 12px; color: var(--main-blue);">0/5 완료</span>
+                </div>
+                <div id="task-list">
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 10px;">과목을 선택하고 미션을 생성해 보세요.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 적중 피드백 -->
+        <section id="page-feedback" class="view-page">
+            <div class="card">
+                <div class="card-title">선생님 출제 스타일 메모</div>
+                <form id="form-feedback" onsubmit="saveFeedback(event)">
+                    <div class="input-group">
+                        <label>과목 및 선생님</label>
+                        <input type="text" id="fb-teacher" class="input-control" required placeholder="예: 한국사 이선생님">
+                    </div>
+                    <div class="input-group">
+                        <label>출제 특이성향 및 노하우</label>
+                        <textarea id="fb-content" class="input-control" rows="3" required placeholder="예: 프린트물 각주에서 서술형 문제를 자주 출제함."></textarea>
+                    </div>
+                    <button type="submit" class="btn">피드백 메모 저장</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-title">출제 성향 보관함</div>
+                <div id="feedback-list">
+                    <!-- 피드백 항목 출력 영역 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 독립 개념 퀴즈 -->
+        <section id="page-quiz" class="view-page">
+            <div class="card">
+                <div class="card-title">
+                    개념 빈칸 퀴즈
+                    <button class="btn btn-secondary btn-sm" id="btn-toggle-incorrect" onclick="toggleIncorrectFilter()">오답만 모아보기</button>
+                </div>
+                <div id="quiz-list">
+                    <!-- 퀴즈 카드 목록 영역 -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- 퀴즈 단답형 풀이 모달 -->
+<div class="quiz-modal" id="quiz-modal">
+    <div class="quiz-card">
+        <h3 style="margin-bottom: 10px; color: var(--main-blue-hover);">개념 확인 문제</h3>
+        <p id="quiz-question-text" style="font-size: 14px; line-height: 1.5; margin-bottom: 16px;"></p>
+        <div class="input-group">
+            <input type="text" id="quiz-user-input" class="input-control" placeholder="빈칸에 들어갈 정답을 입력하세요">
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="submitQuizAnswer()">정답 제출</button>
+            <button class="btn btn-secondary" onclick="closeQuizModal()">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ==========================================
+       전역 상태 및 데이터 구조
+    ========================================== */
+    let currentUser = null;
+    let isDuplicateChecked = false;
+    let filterIncorrectOnly = false;
+    let currentActiveQuizId = null;
+
+    // 데이터 베이스 (LocalStorage 키 기반)
+    let db = {
+        users: {},       // { id: { pw: "" } }
+        notes: [],       // [ { id, userId, subject, teacher, importance, keyword, content, date } ]
+        schedules: [],   // [ { id, userId, text, completed } ]
+        feedbacks: [],   // [ { id, userId, teacher, content } ]
+        quizzes: [],     // [ { id, noteId, userId, question, answer, isCorrect, attempted } ]
+        ddays: []        // [ { id, userId, title, date } ]
+    };
+
+    /* ==========================================
+       초기화 및 세션 체크
+    ========================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+        loadLocalStorage();
+        checkSession();
+        setupSidebar();
+    });
+
+    function loadLocalStorage() {
+        const stored = localStorage.getItem('jokbo_db');
+        if (stored) {
+            try {
+                db = JSON.parse(stored);
+            } catch (e) {
+                console.error("Localstorage load error", e);
+            }
+        }
+    }
+
+    function saveLocalStorage() {
+        localStorage.setItem('jokbo_db', JSON.stringify(db));
+        updateDashboardMetrics();
+    }
+
+    function checkSession() {
+        const sessionUser = sessionStorage.getItem('jokbo_session') || localStorage.getItem('jokbo_kept_session');
+        if (sessionUser) {
+            currentUser = sessionUser;
+            onLoginSuccess();
+        } else {
+            showPage('page-auth');
+        }
+    }
+
+    /* ==========================================
+       사이드바 메뉴 및 라우팅 Control
+    ========================================== */
+    function setupSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const btnToggle = document.getElementById('btn-sidebar-toggle');
+        const btnClose = document.getElementById('btn-sidebar-close');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        btnToggle.addEventListener('click', openSidebar);
+        btnClose.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        document.querySelectorAll('.sidebar-menu li').forEach(item => {
+            item.addEventListener('click', () => {
+                const targetPage = item.getAttribute('data-target');
+                showPage(targetPage);
+                closeSidebar();
+            });
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', handleLogout);
+    }
+
+    function showPage(pageId) {
+        if (!currentUser && pageId !== 'page-auth') {
+            alert('로그인이 필요한 서비스입니다.');
+            pageId = 'page-auth';
+        }
+
+        document.querySelectorAll('.view-page').forEach(page => {
+            page.classList.remove('active');
+        });
+        document.getElementById(pageId).classList.add('active');
+
+        // 페이지 이동 시 데이터 동기화
+        if (currentUser) {
+            if (pageId === 'page-home') updateDashboardMetrics();
+            if (pageId === 'page-top') renderNotes();
+            if (pageId === 'page-scheduler') populateSubjectDropdowns();
+            if (pageId === 'page-feedback') renderFeedbacks();
+            if (pageId === 'page-quiz') renderQuizzes();
+        }
+    }
+
+    /* ==========================================
+       인증 로직 (회원가입/로그인)
+    ========================================== */
+    function switchAuthTab(type) {
+        document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+        if (type === 'login') {
+            document.getElementById('tab-login').classList.add('active');
+            document.getElementById('form-login').style.display = 'block';
+            document.getElementById('form-signup').style.display = 'none';
+        } else {
+            document.getElementById('tab-signup').classList.add('active');
+            document.getElementById('form-login').style.display = 'none';
+            document.getElementById('form-signup').style.display = 'block';
+        }
+    }
+
+    function checkDuplicateId() {
+        const id = document.getElementById('signup-id').value.trim();
+        if (!id) {
+            alert('아이디를 입력해 주세요.');
+            return;
+        }
+        if (db.users[id]) {
+            alert('이미 존재하는 아이디입니다.');
+            isDuplicateChecked = false;
+        } else {
+            alert('사용 가능한 아이디입니다.');
+            isDuplicateChecked = true;
+        }
+    }
+
+    function handleSignup(e) {
+        e.preventDefault();
+        const id = document.getElementById('signup-id').value.trim();
+        const pw = document.getElementById('signup-pw').value.trim();
+
+        if (!isDuplicateChecked) {
+            alert('아이디 중복 확인을 먼저 진행해 주세요.');
+            return;
+        }
+
+        db.users[id] = { pw: pw };
+        saveLocalStorage();
+        alert('회원가입이 완료되었습니다. 로그인해 주세요.');
+        switchAuthTab('login');
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        const id = document.getElementById('login-id').value.trim();
+        const pw = document.getElementById('login-pw').value.trim();
+        const keep = document.getElementById('login-keep').checked;
+
+        if (db.users[id] && db.users[id].pw === pw) {
+            currentUser = id;
+            if (keep) {
+                localStorage.setItem('jokbo_kept_session', id);
+            } else {
+                sessionStorage.setItem('jokbo_session', id);
+            }
+            onLoginSuccess();
+        } else {
+            alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+        }
+    }
+
+    function onLoginSuccess() {
+        document.getElementById('sidebar-user-name').innerText = `${currentUser} 님`;
+        document.getElementById('btn-logout').style.display = 'flex';
+        showPage('page-home');
+    }
+
+    function handleLogout() {
+        currentUser = null;
+        sessionStorage.removeItem('jokbo_session');
+        localStorage.removeItem('jokbo_kept_session');
+        document.getElementById('sidebar-user-name').innerText = '게스트 사용자';
+        document.getElementById('btn-logout').style.display = 'none';
+        showPage('page-auth');
+    }
+
+    /* ==========================================
+       0페이지: 메인 대시보드 지표 및 D-Day
+    ========================================== */
+    function updateDashboardMetrics() {
+        if (!currentUser) return;
+
+        // 1. 오늘의 스케줄 미션 달성률
+        const userTasks = db.schedules.filter(s => s.userId === currentUser);
+        const totalTasks = userTasks.length;
+        const completedTasks = userTasks.filter(s => s.completed).length;
+        const taskRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        // 2. 개념 퀴즈 정답률
+        const userQuizzes = db.quizzes.filter(q => q.userId === currentUser && q.attempted);
+        const totalQuizzes = userQuizzes.length;
+        const correctQuizzes = userQuizzes.filter(q => q.isCorrect).length;
+        const quizRate = totalQuizzes > 0 ? Math.round((correctQuizzes / totalQuizzes) * 100) : 0;
+
+        // 3. 실시간 5:5 통합 준비도
+        const readiness = Math.round((taskRate * 0.5) + (quizRate * 0.5));
+
+        // UI 반영
+        document.getElementById('readiness-val').innerText = `${readiness}%`;
+        const circle = document.getElementById('readiness-circle');
+        const offset = 408 - (408 * readiness / 100);
+        circle.style.strokeDashoffset = offset;
+
+        // 독립된 지표 카드 3종 갱신
+        document.getElementById('stat-quiz-today').innerText = `${quizRate}%`;
+        document.getElementById('stat-task-today').innerText = `${taskRate}%`;
+        document.getElementById('stat-total-progress').innerText = `${readiness}%`;
+
+        renderDDays();
+    }
+
+    function toggleDDayInput() {
+        const box = document.getElementById('dday-input-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function addDDay() {
+        const title = document.getElementById('dday-title').value.trim();
+        const date = document.getElementById('dday-date').value;
+
+        if (!title || !date) {
+            alert('과목명과 날짜를 지정해 주세요.');
+            return;
+        }
+
+        db.ddays.push({
+            id: Date.now(),
+            userId: currentUser,
+            title: title,
+            date: date
+        });
+        saveLocalStorage();
+        document.getElementById('dday-title').value = '';
+        document.getElementById('dday-date').value = '';
+        toggleDDayInput();
+    }
+
+    function deleteDDay(id) {
+        db.ddays = db.ddays.filter(d => d.id !== id);
+        saveLocalStorage();
+    }
+
+    function renderDDays() {
+        const list = document.getElementById('dday-list');
+        list.innerHTML = '';
+        const userDDays = db.ddays.filter(d => d.userId === currentUser);
+
+        if (userDDays.length === 0) {
+            list.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center;">등록된 시험 D-Day가 없습니다.</p>';
+            return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        userDDays.forEach(item => {
+            const targetDate = new Date(item.date);
+            targetDate.setHours(0, 0, 0, 0);
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let ddayStr = `D-${diffDays}`;
+            if (diffDays === 0) ddayStr = 'D-Day';
+            if (diffDays < 0) ddayStr = `D+${Math.abs(diffDays)}`;
+
+            const div = document.createElement('div');
+            div.className = 'dday-item';
+            div.innerHTML = `
+                <div>
+                    <strong style="font-size: 14px;">${item.title}</strong>
+                    <span style="font-size: 11px; color: var(--text-secondary); margin-left: 6px;">${item.date}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="dday-badge">${ddayStr}</span>
+                    <button class="icon-btn" style="font-size: 14px; width: 24px; height: 24px;" onclick="deleteDDay(${item.id})">✕</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    /* ==========================================
+       1페이지: 필기 수집 & OCR
+    ========================================== */
+    function processImageOCR(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const preview = document.getElementById('ocr-preview');
+        const loading = document.getElementById('ocr-loading');
+        
+        // 이미지 미리보기 표시
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        loading.style.display = 'block';
+
+        // 캔버스 이용 밝기/명암 대비 전처리
+        const img = new Image();
+        img.src = preview.src;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            ctx.drawImage(img, 0, 0);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            // 명암 대비 향상 알고리즘 (Contrast adjustment)
+            const contrast = 40; // contrast level
+            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+            for (let i = 0; i < data.length; i += 4) {
+                // 흑백화 및 명암 보정
+                let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                avg = factor * (avg - 128) + 128;
+                data[i] = avg;     // Red
+                data[i + 1] = avg; // Green
+                data[i + 2] = avg; // Blue
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // Tesseract OCR 수행
+            Tesseract.recognize(
+                canvas.toDataURL(),
+                'kor+eng',
+                { logger: m => console.log(m) }
+            ).then(({ data: { text } }) => {
+                loading.style.display = 'none';
+                const contentArea = document.getElementById('note-content');
+                contentArea.value = (contentArea.value ? contentArea.value + '\n' : '') + text.trim();
+            }).catch(err => {
+                loading.style.display = 'none';
+                console.error("OCR Error", err);
+                alert("이미지에서 글자를 읽는 도중 오류가 발생했습니다. 직접 입력이나 붙여넣기를 이용해 주세요.");
+            });
+        };
+    }
+
+    async function pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            const contentArea = document.getElementById('note-content');
+            contentArea.value = (contentArea.value ? contentArea.value + '\n' : '') + text;
+        } catch (err) {
+            alert('클립보드 접근 권한이 없거나 지원되지 않습니다. 직접 붙여넣기를 진행해 주세요.');
+        }
+    }
+
+    function saveNote(e) {
+        e.preventDefault();
+        const subject = document.getElementById('note-subject').value.trim();
+        const teacher = document.getElementById('note-teacher').value.trim();
+        const importance = document.getElementById('note-importance').value;
+        const keyword = document.getElementById('note-keyword').value.trim();
+        const content = document.getElementById('note-content').value.trim();
+
+        const noteId = Date.now();
+
+        // 1. 필기 DB 저장
+        db.notes.push({
+            id: noteId,
+            userId: currentUser,
+            subject: subject,
+            teacher: teacher,
+            importance: importance,
+            keyword: keyword,
+            content: content,
+            date: new Date().toLocaleDateString()
+        });
+
+        // 2. 정답 키워드 기반 자동 퀴즈 세트 생성 (빈칸 처리)
+        let questionText = content;
+        if (content.includes(keyword)) {
+            questionText = content.replace(new RegExp(keyword, 'g'), '(  _____  )');
+        } else {
+            questionText = `다음 설명에 해당하는 개념은 무엇일까요?\n"${content}"`;
+        }
+
+        db.quizzes.push({
+            id: Date.now() + 1,
+            noteId: noteId,
+            userId: currentUser,
+            question: questionText,
+            answer: keyword,
+            isCorrect: false,
+            attempted: false
+        });
+
+        saveLocalStorage();
+        alert('필기 및 퀴즈 세트가 성공적으로 등록되었습니다.');
+
+        // Form Reset
+        document.getElementById('form-note').reset();
+        document.getElementById('ocr-preview').style.display = 'none';
+        showPage('page-top');
+    }
+
+    /* ==========================================
+       2페이지: 개념 족보 TOP
+    ========================================== */
+    function populateSubjectDropdowns() {
+        const userNotes = db.notes.filter(n => n.userId === currentUser);
+        const subjects = [...new Set(userNotes.map(n => n.subject))];
+        const teachers = [...new Set(userNotes.map(n => n.teacher))];
+
+        const filterSub = document.getElementById('filter-subject');
+        const filterTea = document.getElementById('filter-teacher');
+        const schedSub = document.getElementById('schedule-subject');
+
+        filterSub.innerHTML = '<option value="all">전체 과목</option>';
+        filterTea.innerHTML = '<option value="all">전체 선생님</option>';
+        schedSub.innerHTML = '';
+
+        subjects.forEach(s => {
+            filterSub.innerHTML += `<option value="${s}">${s}</option>`;
+            schedSub.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+
+        teachers.forEach(t => {
+            filterTea.innerHTML += `<option value="${t}">${t}</option>`;
+        });
+    }
+
+    function renderNotes() {
+        populateSubjectDropdowns();
+        const list = document.getElementById('note-list');
+        list.innerHTML = '';
+
+        const subFilter = document.getElementById('filter-subject').value;
+        const teaFilter = document.getElementById('filter-teacher').value;
+        const searchKeyword = document.getElementById('search-keyword').value.trim().toLowerCase();
+
+        let filtered = db.notes.filter(n => n.userId === currentUser);
+
+        if (subFilter !== 'all') filtered = filtered.filter(n => n.subject === subFilter);
+        if (teaFilter !== 'all') filtered = filtered.filter(n => n.teacher === teaFilter);
+        if (searchKeyword) {
+            filtered = filtered.filter(n => 
+                n.subject.toLowerCase().includes(searchKeyword) ||
+                n.teacher.toLowerCase().includes(searchKeyword) ||
+                n.keyword.toLowerCase().includes(searchKeyword) ||
+                n.content.toLowerCase().includes(searchKeyword)
+            );
+        }
+
+        // 중요도 순 정렬 (상 -> 중 -> 하)
+        const impOrder = { '상': 1, '중': 2, '하': 3 };
+        filtered.sort((a, b) => impOrder[a.importance] - impOrder[b.importance]);
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">등록된 필기 데이터가 없습니다.</p>';
+            return;
+        }
+
+        filtered.forEach(note => {
+            const card = document.createElement('div');
+            card.className = `card note-item importance-${note.importance}`;
+            card.innerHTML = `
+                <div class="note-meta">
+                    <span>📚 ${note.subject}</span>
+                    <span>👨‍🏫 ${note.teacher}선생님</span>
+                    <span>⭐ 중요도 ${note.importance}</span>
+                </div>
+                <p style="font-size: 14px; line-height: 1.5; white-space: pre-line;">${note.content}</p>
+                <span class="keyword-tag">🔑 Key: ${note.keyword}</span>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    /* ==========================================
+       3페이지: AI 스케줄러
+    ========================================== */
+    function generateSchedule() {
+        const subject = document.getElementById('schedule-subject').value;
+        const time = document.getElementById('schedule-time').value || 60;
+
+        if (!subject) {
+            alert('필기를 먼저 등록하여 과목을 만들어 주세요.');
+            return;
+        }
+
+        // 과목 기반 미션 5개 자동 생성
+        const tasksTemplate = [
+            `${subject} 핵심 개념 필기 1회 정독하기 (${Math.round(time * 0.2)}분)`,
+            `${subject} 핵심 키워드 암기 및 확인하기 (${Math.round(time * 0.2)}분)`,
+            `${subject} 개념 빈칸 퀴즈 풀기 (${Math.round(time * 0.2)}분)`,
+            `${subject} 오답 노트 복습 및 키워드 재점검 (${Math.round(time * 0.2)}분)`,
+            `${subject} 출제 선생님 특이 성향 피드백 확인 (${Math.round(time * 0.2)}분)`
+        ];
+
+        // 기존 스케줄 초기화 후 새 미션 등록
+        db.schedules = db.schedules.filter(s => s.userId !== currentUser);
+
+        tasksTemplate.forEach((t, index) => {
+            db.schedules.push({
+                id: Date.now() + index,
+                userId: currentUser,
+                text: t,
+                completed: false
+            });
+        });
+
+        saveLocalStorage();
+        renderSchedules();
+    }
+
+    function toggleTask(id) {
+        const task = db.schedules.find(s => s.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            saveLocalStorage();
+            renderSchedules();
+        }
+    }
+
+    function renderSchedules() {
+        const list = document.getElementById('task-list');
+        list.innerHTML = '';
+
+        const userTasks = db.schedules.filter(s => s.userId === currentUser);
+
+        if (userTasks.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 10px;">과목을 선택하고 미션을 생성해 보세요.</p>';
+            document.getElementById('task-progress-label').innerText = '0/0 완료';
+            return;
+        }
+
+        const completedCount = userTasks.filter(t => t.completed).length;
+        document.getElementById('task-progress-label').innerText = `${completedCount}/${userTasks.length} 완료`;
+
+        userTasks.forEach(task => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `
+                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                <span class="task-text ${task.completed ? 'completed' : ''}" style="font-size: 13px;">${task.text}</span>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    /* ==========================================
+       4페이지: 적중 피드백
+    ========================================== */
+    function saveFeedback(e) {
+        e.preventDefault();
+        const teacher = document.getElementById('fb-teacher').value.trim();
+        const content = document.getElementById('fb-content').value.trim();
+
+        db.feedbacks.push({
+            id: Date.now(),
+            userId: currentUser,
+            teacher: teacher,
+            content: content
+        });
+
+        saveLocalStorage();
+        document.getElementById('form-feedback').reset();
+        renderFeedbacks();
+    }
+
+    function renderFeedbacks() {
+        const list = document.getElementById('feedback-list');
+        list.innerHTML = '';
+
+        const userFB = db.feedbacks.filter(f => f.userId === currentUser);
+
+        if (userFB.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 10px;">저장된 출제 성향 메모가 없습니다.</p>';
+            return;
+        }
+
+        userFB.forEach(fb => {
+            const card = document.createElement('div');
+            card.className = 'card feedback-item';
+            card.innerHTML = `
+                <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px; color: #d35400;">📌 ${fb.teacher}</div>
+                <p style="font-size: 13px; color: #2c3e50;">${fb.content}</p>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    /* ==========================================
+       5페이지: 개념 퀴즈 & 폭죽 애니메이션
+    ========================================== */
+    function toggleIncorrectFilter() {
+        filterIncorrectOnly = !filterIncorrectOnly;
+        const btn = document.getElementById('btn-toggle-incorrect');
+        btn.style.backgroundColor = filterIncorrectOnly ? 'var(--main-blue)' : 'var(--light-blue)';
+        btn.style.color = filterIncorrectOnly ? 'white' : 'var(--main-blue-hover)';
+        renderQuizzes();
+    }
+
+    function renderQuizzes() {
+        const list = document.getElementById('quiz-list');
+        list.innerHTML = '';
+
+        let userQuizzes = db.quizzes.filter(q => q.userId === currentUser);
+
+        if (filterIncorrectOnly) {
+            userQuizzes = userQuizzes.filter(q => q.attempted && !q.isCorrect);
+        }
+
+        if (userQuizzes.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">풀 수 있는 퀴즈가 없습니다.</p>';
+            return;
+        }
+
+        userQuizzes.forEach(quiz => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            let statusBadge = '<span style="color: var(--text-secondary); font-size: 12px;">미풀이</span>';
+            if (quiz.attempted) {
+                statusBadge = quiz.isCorrect ? 
+                    '<span style="color: var(--accent-green); font-weight:700; font-size: 12px;">⭕ 정답</span>' : 
+                    '<span style="color: var(--accent-red); font-weight:700; font-size: 12px;">❌ 오답</span>';
+            }
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: 700; color: var(--main-blue);">개념 문제</span>
+                    ${statusBadge}
+                </div>
+                <p style="font-size: 14px; margin-bottom: 12px; line-height: 1.4;">${quiz.question}</p>
+                <button class="btn btn-sm" onclick="openQuizModal(${quiz.id})">문제 풀기</button>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function openQuizModal(id) {
+        currentActiveQuizId = id;
+        const quiz = db.quizzes.find(q => q.id === id);
+        if (quiz) {
+            document.getElementById('quiz-question-text').innerText = quiz.question;
+            document.getElementById('quiz-user-input').value = '';
+            document.getElementById('quiz-modal').classList.add('active');
+        }
+    }
+
+    function closeQuizModal() {
+        document.getElementById('quiz-modal').classList.remove('active');
+    }
+
+    function submitQuizAnswer() {
+        const input = document.getElementById('quiz-user-input').value.trim();
+        const quiz = db.quizzes.find(q => q.id === currentActiveQuizId);
+
+        if (!quiz) return;
+
+        quiz.attempted = true;
+        if (input.toLowerCase() === quiz.answer.toLowerCase()) {
+            quiz.isCorrect = true;
+            // canvas-confetti 폭죽 효과 실행
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.6 }
+            });
+            alert('🎉 정답입니다!');
+        } else {
+            quiz.isCorrect = false;
+            alert(`아쉽네요, 오답입니다.\n정답: ${quiz.answer}`);
+        }
+
+        saveLocalStorage();
+        closeQuizModal();
+        renderQuizzes();
+    }
+</script>
+</body>
+</html>
